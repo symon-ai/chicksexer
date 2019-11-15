@@ -1,2 +1,2 @@
 include chicksexer/README.md
-recursive-include models *
+recursive-include chicksexer/models *
