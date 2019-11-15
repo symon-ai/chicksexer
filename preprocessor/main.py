@@ -130,11 +130,11 @@ def main():
     name2proba = _process_us_stats(name2proba)
     _LOGGER.info('Processing Common Names...')
     name2proba = _process_common_names(name2proba)
-    _LOGGER.info('Augmenting Neutral Names...')
-    name2proba = _augment_full_names(name2proba, 'neutral')
-    _LOGGER.info('Augmenting Female Names...')
-    name2proba = _augment_full_names(name2proba, 'female')
-    _LOGGER.info('Saving to the pickle files...')
+    # _LOGGER.info('Augmenting Neutral Names...')
+    # name2proba = _augment_full_names(name2proba, 'neutral')
+    # _LOGGER.info('Augmenting Female Names...')
+    # name2proba = _augment_full_names(name2proba, 'female')
+    # _LOGGER.info('Saving to the pickle files...')
 
     # randomly split into train/test set
     name2proba = dict(name2proba)
