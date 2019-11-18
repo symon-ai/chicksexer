@@ -88,7 +88,7 @@ def _load_model():
 
 
 def predict_gender(name: str, return_proba: bool = True, return_attention: bool = False,
-                   neutral_cutoff=CLASS2DEFAULT_CUTOFF[POSITIVE_CLASS]) -> Union[str, dict, tuple]:
+                   neutral_cutoff=CLASS2DEFAULT_CUTOFF[POSITIVE_CLASS]) -> Union[str, float, tuple]:
     """
     Predict the gender of the given name string.
 

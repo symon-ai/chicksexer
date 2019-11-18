@@ -251,8 +251,9 @@ class CharLSTM(object):
             y_pred = [y_pred]
 
         if return_proba:
-            return_value = [{POSITIVE_CLASS: float(proba), NEGATIVE_CLASS: float(1 - proba)}
-                            for proba in y_pred]
+            # return_value = [{POSITIVE_CLASS: float(proba), NEGATIVE_CLASS: float(1 - proba)}
+            #                 for proba in y_pred]
+            return_value = [float(proba) for proba in y_pred]
         else:
             return_value = self._categorize_y(y_pred, low_cutoff, high_cutoff)
 
