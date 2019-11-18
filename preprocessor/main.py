@@ -2,6 +2,7 @@
 """
 Main module of preprocessor package. Can be executed by `python -m preprocessor`.
 """
+import csv
 import os
 import pickle
 from random import shuffle
@@ -86,6 +87,23 @@ def _process_common_names(name2proba):
     return name2proba
 
 
+def _process_alberta_names(name2proba):
+    name_gender_count = {}
+    with open(os.path.join(_RAW_DATA_ROOT, 'Alberta-Names.csv'), encoding='utf8') as file_:
+        reader = csv.reader(file_)
+        for row in reader:
+            name = row[0]
+            gender = POSITIVE_CLASS if row[2] == 'Boy' else NEGATIVE_CLASS
+            if name not in name_gender_count:
+                name_gender_count[name] = {POSITIVE_CLASS: 0, NEGATIVE_CLASS: 0}
+            name_gender_count[name][gender] += 1
+
+    for name, counts in name_gender_count.items():
+        name2proba[name] = float(counts[POSITIVE_CLASS]) / (counts[POSITIVE_CLASS] + counts[NEGATIVE_CLASS])
+
+    return name2proba
+
+
 def _augment_full_names(name2proba, gender):
     """Augment neutral names"""
     if gender == 'neutral':
@@ -135,6 +153,8 @@ def main():
     # _LOGGER.info('Augmenting Female Names...')
     # name2proba = _augment_full_names(name2proba, 'female')
     # _LOGGER.info('Saving to the pickle files...')
+    _LOGGER.info('Processing Alberta Names...')
+    name2proba = _process_alberta_names(name2proba)
 
     # randomly split into train/test set
     name2proba = dict(name2proba)
