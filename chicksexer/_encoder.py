@@ -141,7 +141,7 @@ class CharEncoder(object):
         characters = regex.sub(r'\t|\s+|\u200d', ' ', characters)
         characters = regex.sub(r'`', "'", characters)
         characters = regex.sub(r'–', "-", characters)
-        characters = regex.sub(f'[^{"".join(self._label_encoder.classes_)}]', ' ', characters)
+        characters = regex.sub(f'[^{"".join(self._label_encoder.classes_)}]', '', characters)
 
         return characters
 
