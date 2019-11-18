@@ -59,8 +59,7 @@ class CharEncoder(object):
                 try:
                     word_id2char_ids.append(self._label_encoder.transform(list(word)).tolist())
                 except ValueError as exception:
-                    unseen_chars = regex.search(
-                        r'y contains new labels: (.*)$', exception.args[0], flags=regex.DOTALL).groups()[0]
+                    unseen_chars = regex.search(r'y contains previously unseen labels: (.*)$', exception.args[0]).groups()[0]
                     raise UnseenCharacterException('Unseen characters: {}'.format(unseen_chars))
 
             name_id2word_id2char_ids.append(word_id2char_ids)
@@ -142,6 +141,8 @@ class CharEncoder(object):
         characters = regex.sub(r'\t|\s+|\u200d', ' ', characters)
         characters = regex.sub(r'`', "'", characters)
         characters = regex.sub(r'–', "-", characters)
+        characters = regex.sub(f'[^{"".join(self._label_encoder.classes_)}]', ' ', characters)
+
         return characters
 
     @property
