@@ -25,7 +25,7 @@ __author__ = 'kensk8er'
 
 def _filter(names, predictions, return_proba):
     """Filter bad results."""
-    neutral_pred = {POSITIVE_CLASS: 0.5, NEGATIVE_CLASS: 0.5} if return_proba else NEUTRAL_CLASS
+    neutral_pred = .5 if return_proba else NEUTRAL_CLASS
 
     for name_id, name in enumerate(names):
         if not regex.search(r'\w', name):
