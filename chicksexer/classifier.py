@@ -10,9 +10,9 @@ from time import time
 import numpy as np
 import tensorflow as tf
 from sklearn.metrics import accuracy_score, classification_report
-from tensorflow.contrib.tensorboard.plugins import projector
+from tensorboard.plugins import projector
 from tensorflow.python.layers.core import dropout
-from tensorflow.contrib.rnn import LSTMCell
+from tensorflow.compat.v1.nn.rnn_cell import LSTMCell
 from tensorflow.python.client import timeline
 
 from ._batch import BatchGenerator
@@ -68,7 +68,7 @@ class CharLSTM(object):
 
         def add_metric_summaries(mode, iteration, name2metric):
             """Add summary for metric."""
-            metric_summary = tf.Summary()
+            metric_summary = tf.compat.v1.Summary()
             for name, metric in name2metric.items():
                 metric_summary.value.add(tag='{}_{}'.format(mode, name), simple_value=metric)
             summary_writer.add_summary(metric_summary, global_step=iteration)
@@ -142,14 +142,14 @@ class CharLSTM(object):
         iteration = 0
 
         # profiler
-        run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE) if profile else None
-        run_metadata = tf.RunMetadata() if profile else None
+        run_options = tf.compat.v1.RunOptions(trace_level=tf.compat.v1.RunOptions.FULL_TRACE) if profile else None
+        run_metadata = tf.compat.v1.RunMetadata() if profile else None
 
         _LOGGER.info('Building the tensorflow graph...')
         self._build_graph()
         nodes = self._nodes
-        session = tf.Session(graph=self._graph)
-        summary_writer = tf.summary.FileWriter(
+        session = tf.compat.v1.Session(graph=self._graph)
+        summary_writer = tf.compat.v1.summary.FileWriter(
             os.path.join(model_path, self._tensorboard_dir), session.graph)
         self._visualize_embedding(model_path, summary_writer)
         session.run(nodes['init'])
@@ -220,7 +220,7 @@ class CharLSTM(object):
 
         # build the graph and restore the session
         instance._build_graph()
-        instance._session = tf.Session(graph=instance._graph)
+        instance._session = tf.compat.v1.Session(graph=instance._graph)
         instance._session.run(instance._nodes['init'])
         instance._nodes['saver'].restore(
             instance._session, os.path.join(model_path, instance._checkpoint_file_name))
@@ -284,7 +284,7 @@ class CharLSTM(object):
         def get_num_params():
             """Count the number of trainable parameters."""
             num_params = 0
-            for variable in tf.trainable_variables():
+            for variable in tf.compat.v1.trainable_variables():
                 shape = variable.get_shape()
                 var_num_params = 1
                 for dimension in shape:
@@ -297,42 +297,42 @@ class CharLSTM(object):
         nodes = dict()
 
         with graph.as_default():
-            with tf.name_scope('inputs'):
+            with tf.compat.v1.name_scope('inputs'):
                 # inputs
-                nodes['X'] = tf.placeholder(tf.int32, [None, None, None], name='X')
-                nodes['y'] = tf.placeholder(tf.float32, [None], name='y')
-                nodes['word_lens'] = tf.placeholder(tf.int32, [None], name='word_lens')
-                nodes['char_lens'] = tf.placeholder(tf.int32, [None], name='char_lens')
-                nodes['is_train'] = tf.placeholder(tf.bool, shape=[], name='is_train')
+                nodes['X'] = tf.compat.v1.placeholder(tf.int32, [None, None, None], name='X')
+                nodes['y'] = tf.compat.v1.placeholder(tf.float32, [None], name='y')
+                nodes['word_lens'] = tf.compat.v1.placeholder(tf.int32, [None], name='word_lens')
+                nodes['char_lens'] = tf.compat.v1.placeholder(tf.int32, [None], name='char_lens')
+                nodes['is_train'] = tf.compat.v1.placeholder(tf.bool, shape=[], name='is_train')
 
                 # get the shape of the input
-                X_shape = tf.shape(nodes['X'])
+                X_shape = tf.shape(input=nodes['X'])
                 batch_size = X_shape[0]
                 max_word_len = X_shape[1]
                 max_char_len = X_shape[2]
 
-            with tf.name_scope('embedding_layer'):
+            with tf.compat.v1.name_scope('embedding_layer'):
                 nodes['embeddings'] = tf.Variable(
-                    tf.random_uniform([self._vocab_size, self._embedding_size], -1.0, 1.0),
+                    tf.random.uniform([self._vocab_size, self._embedding_size], -1.0, 1.0),
                     trainable=True, name='embeddings')
-                embedded = tf.nn.embedding_lookup(nodes['embeddings'], nodes['X'])
+                embedded = tf.nn.embedding_lookup(params=nodes['embeddings'], ids=nodes['X'])
                 embedded = dropout(
                     embedded, rate=self._embedding_dropout, training=nodes['is_train'])
 
-            with tf.name_scope('char_rnn_layer') as scope:
+            with tf.compat.v1.name_scope('char_rnn_layer') as scope:
                 # reshape the embedded matrix in order to pass it to dynamic_rnn
                 embedded = tf.reshape(
                     embedded, [batch_size * max_word_len, max_char_len, self._embedding_size])
 
                 char_rnn_fw_cell = LSTMCell(num_units=self._char_rnn_size)
                 char_rnn_bw_cell = LSTMCell(num_units=self._char_rnn_size)
-                (char_output_fw, char_output_bw), states = tf.nn.bidirectional_dynamic_rnn(
+                (char_output_fw, char_output_bw), states = tf.compat.v1.nn.bidirectional_dynamic_rnn(
                     char_rnn_fw_cell, char_rnn_bw_cell, embedded, dtype=tf.float32,
                     sequence_length=nodes['char_lens'], scope='{}bidirectional_rnn'.format(scope))
 
                 char_rnn_outputs = tf.concat([char_output_fw, char_output_bw], axis=2)
 
-                with tf.name_scope('char_pooling_layer'):
+                with tf.compat.v1.name_scope('char_pooling_layer'):
                     char_rnn_outputs = self._mean_pool(
                         char_rnn_outputs, batch_size, max_char_len, max_word_len,
                         nodes['char_lens'])
@@ -340,48 +340,48 @@ class CharLSTM(object):
                 char_rnn_outputs = dropout(
                     char_rnn_outputs, rate=self._char_rnn_dropout, training=nodes['is_train'])
 
-            with tf.name_scope('word_rnn_layer') as scope:
+            with tf.compat.v1.name_scope('word_rnn_layer') as scope:
                 word_rnn_fw_cell = LSTMCell(num_units=self._word_rnn_size)
                 word_rnn_bw_cell = LSTMCell(num_units=self._word_rnn_size)
-                (char_output_fw, char_output_bw), states = tf.nn.bidirectional_dynamic_rnn(
+                (char_output_fw, char_output_bw), states = tf.compat.v1.nn.bidirectional_dynamic_rnn(
                     word_rnn_fw_cell, word_rnn_bw_cell, char_rnn_outputs, dtype=tf.float32,
                     sequence_length=nodes['word_lens'], scope='{}bidirectional_rnn'.format(scope))
                 word_rnn_outputs = tf.concat([char_output_fw, char_output_bw], axis=2)
 
-                with tf.name_scope('word_pooling_layer'):
+                with tf.compat.v1.name_scope('word_pooling_layer'):
                     word_rnn_outputs, nodes['attentions'] = self._attention_pool(word_rnn_outputs)
 
                 word_rnn_outputs = dropout(
                     word_rnn_outputs, rate=self._word_rnn_dropout, training=nodes['is_train'])
 
-            with tf.variable_scope('softmax_layer'):
+            with tf.compat.v1.variable_scope('softmax_layer'):
                 nodes['W_s'] = tf.Variable(
-                    tf.random_normal([self._word_rnn_size * 2, 1]), name='weight')
-                nodes['b_s'] = tf.Variable(tf.random_normal([1]), name='bias')
+                    tf.random.normal([self._word_rnn_size * 2, 1]), name='weight')
+                nodes['b_s'] = tf.Variable(tf.random.normal([1]), name='bias')
                 logits = tf.squeeze(tf.matmul(word_rnn_outputs, nodes['W_s']) + nodes['b_s'])
                 nodes['y_pred'] = tf.nn.sigmoid(logits)
 
-            with tf.variable_scope('optimizer'):
+            with tf.compat.v1.variable_scope('optimizer'):
                 nodes['loss'] = tf.reduce_mean(
-                    tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=nodes['y']))
-                nodes['optimizer'] = tf.train.AdamOptimizer(self._learning_rate).minimize(
+                    input_tensor=tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=nodes['y']))
+                nodes['optimizer'] = tf.compat.v1.train.AdamOptimizer(self._learning_rate).minimize(
                     nodes['loss'])
 
             # initialize the variables
-            nodes['init'] = tf.global_variables_initializer()
+            nodes['init'] = tf.compat.v1.global_variables_initializer()
 
             # count the number of parameters
             self._num_params = get_num_params()
             _LOGGER.debug('Total number of parameters = {:,}'.format(self._num_params))
 
             # generate summaries
-            for variable in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES):
+            for variable in tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.GLOBAL_VARIABLES):
                 # having ":" in the name is illegal, so replace to "/"
-                tf.summary.histogram(variable.name.replace(':', '/'), variable)
-            nodes['summaries'] = tf.summary.merge_all()
+                tf.compat.v1.summary.histogram(variable.name.replace(':', '/'), variable)
+            nodes['summaries'] = tf.compat.v1.summary.merge_all()
 
             # save the model to checkpoint
-            nodes['saver'] = tf.train.Saver()
+            nodes['saver'] = tf.compat.v1.train.Saver()
 
         self._graph = graph
         self._nodes = nodes
@@ -463,23 +463,23 @@ class CharLSTM(object):
         :return: mean of the hidden states over every time step
         """
         # perform mean pooling over characters
-        rnn_outputs = tf.reduce_mean(rnn_outputs, reduction_indices=1)
+        rnn_outputs = tf.reduce_mean(input_tensor=rnn_outputs, axis=1)
 
         # In order to avoid 0 padding affect the mean, multiply by `n / m` where `n` is
         # `max_char_len` and `m` is `char_lens`
         rnn_outputs = tf.multiply(rnn_outputs, tf.cast(max_char_len, tf.float32))  # multiply by `n`
 
         # swap the dimensions in order to divide by an appropriate value for each time step
-        rnn_outputs = tf.transpose(rnn_outputs)
+        rnn_outputs = tf.transpose(a=rnn_outputs)
 
         rnn_outputs = tf.divide(rnn_outputs, tf.cast(char_lens, tf.float32))  # divide by `m`
-        rnn_outputs = tf.transpose(rnn_outputs)  # shape back to the original shape
+        rnn_outputs = tf.transpose(a=rnn_outputs)  # shape back to the original shape
 
         # batch and word-len dimensions were merged before running character-RNN so shape it back
         rnn_outputs = tf.reshape(rnn_outputs, [batch_size, max_word_len, self._char_rnn_size * 2])
 
         # there are NaN due to padded words (with char_len=0) so convert those NaN to 0
-        rnn_outputs = tf.where(tf.is_nan(rnn_outputs), tf.zeros_like(rnn_outputs), rnn_outputs)
+        rnn_outputs = tf.compat.v1.where(tf.math.is_nan(rnn_outputs), tf.zeros_like(rnn_outputs), rnn_outputs)
 
         return rnn_outputs
 
@@ -491,24 +491,24 @@ class CharLSTM(object):
         :param rnn_outputs: hidden states of all the time steps after the word-RNN layer
         :return: weighted sum of the hidden states and attention weights for each time step
         """
-        W = tf.Variable(tf.random_normal([2 * self._word_rnn_size]), name='weight_attention')
-        b = tf.Variable(tf.random_normal([1]), name='bias_attention')
+        W = tf.Variable(tf.random.normal([2 * self._word_rnn_size]), name='weight_attention')
+        b = tf.Variable(tf.random.normal([1]), name='bias_attention')
 
         # shape: batch_size * word_len
-        attentions = tf.reduce_sum(tf.multiply(W, rnn_outputs), reduction_indices=2) + b
+        attentions = tf.reduce_sum(input_tensor=tf.multiply(W, rnn_outputs), axis=2) + b
         attentions = tf.nn.softmax(attentions)  # convert to probability
 
         # swap the dimensions in order to multiply by attentions to each word (the 2nd dimension)
-        rnn_outputs = tf.transpose(rnn_outputs, perm=[0, 2, 1])
+        rnn_outputs = tf.transpose(a=rnn_outputs, perm=[0, 2, 1])
 
         # expand the dimension in order to multiply outputs by attentions
         attentions = tf.expand_dims(attentions, axis=1)
 
         rnn_outputs = tf.multiply(attentions, rnn_outputs)
-        rnn_outputs = tf.transpose(rnn_outputs, perm=[0, 2, 1])  # shape back to the original shape
+        rnn_outputs = tf.transpose(a=rnn_outputs, perm=[0, 2, 1])  # shape back to the original shape
 
         # pool hidden states of multiple words (after applying attention) into one hidden states
-        rnn_outputs = tf.reduce_sum(rnn_outputs, reduction_indices=1)
+        rnn_outputs = tf.reduce_sum(input_tensor=rnn_outputs, axis=1)
 
         return rnn_outputs, tf.squeeze(attentions, axis=1)
 
