@@ -99,4 +99,5 @@ data/raw
 profile_train.json
 profile_valid.json
 tensorboard
+.vscode
 

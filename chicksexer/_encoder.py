@@ -38,8 +38,12 @@ class CharEncoder(object):
         characters.insert(0, self._start_char)
         characters.insert(1, self._end_char)
         self._label_encoder.fit(characters)
-        self._start_char_id = int(self._label_encoder.transform([self._start_char])[0])
-        self._end_char_id = int(self._label_encoder.transform([self._end_char])[0])
+        # .classes_ can be accessed only after fit()
+        # characters = regex.sub(f'[^{"".join(self._label_encoder.classes_)}]', '', characters)
+        self._start_char_id = int(
+            self._label_encoder.transform([self._start_char])[0])
+        self._end_char_id = int(
+            self._label_encoder.transform([self._end_char])[0])
         self._fit = True
 
     def encode(self, names):
@@ -57,10 +61,13 @@ class CharEncoder(object):
             for word in name.split(self._separator):
                 word = '{}{}{}'.format(self._start_char, word, self._end_char)
                 try:
-                    word_id2char_ids.append(self._label_encoder.transform(list(word)).tolist())
+                    word_id2char_ids.append(
+                        self._label_encoder.transform(list(word)).tolist())
                 except ValueError as exception:
-                    unseen_chars = regex.search(r'y contains previously unseen labels: (.*)$', exception.args[0]).groups()[0]
-                    raise UnseenCharacterException('Unseen characters: {}'.format(unseen_chars))
+                    unseen_chars = regex.search(
+                        r'y contains previously unseen labels: (.*)$', exception.args[0]).groups()[0]
+                    raise UnseenCharacterException(
+                        'Unseen characters: {}'.format(unseen_chars))
 
             name_id2word_id2char_ids.append(word_id2char_ids)
 
@@ -81,7 +88,8 @@ class CharEncoder(object):
             for char_ids in word_id2char_ids:
                 char_ids.remove(self._start_char_id)
                 char_ids.remove(self._end_char_id)
-                words.append(''.join(self._label_encoder.inverse_transform(char_ids)))
+                words.append(
+                    ''.join(self._label_encoder.inverse_transform(char_ids)))
 
             names.append(self._separator.join(words))
 
@@ -141,7 +149,8 @@ class CharEncoder(object):
         characters = regex.sub(r'\t|\s+|\u200d', ' ', characters)
         characters = regex.sub(r'`', "'", characters)
         characters = regex.sub(r'–', "-", characters)
-        characters = regex.sub(f'[^{"".join(self._label_encoder.classes_)}]', '', characters)
+        # characters = regex.sub(
+        #     f'[^{"".join(self._label_encoder.classes_)}]', '', characters)
 
         return characters
 

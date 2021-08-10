@@ -59,12 +59,17 @@ class CharLSTM(object):
         self._encoder = CharEncoder()
         self._num_params = None
         self._session = None
+        # disable eager execution
+        # tf.compat.v1.disable_eager_execution()
+        print ('disabling tf v2 behavior')
+        tf.compat.v1.disable_v2_behavior()
 
     def train(self, names_train, y_train, names_valid, y_valid, model_path, batch_size=128,
               patience=1024000, stat_interval=1000, valid_interval=1000, summary_interval=1000,
               valid_batch_size=2048, profile=False):
         """Train a gender classifier on the name/gender pairs."""
         start_time = time()
+        print('Patience', patience)
 
         def add_metric_summaries(mode, iteration, name2metric):
             """Add summary for metric."""
@@ -213,6 +218,8 @@ class CharLSTM(object):
         :param model_path: path to the model directory you want to load the model from.
         :return: instance of the model
         """
+        tf.compat.v1.disable_v2_behavior()
+
         _LOGGER.debug('Started loading the model...')
         # load the instance, set _model_path appropriately
         with open(os.path.join(model_path, cls._instance_file_name), 'rb') as model_file:
@@ -288,7 +295,7 @@ class CharLSTM(object):
                 shape = variable.get_shape()
                 var_num_params = 1
                 for dimension in shape:
-                    var_num_params *= dimension.value
+                    var_num_params *= dimension
                 num_params += var_num_params
             return num_params
 
@@ -372,7 +379,7 @@ class CharLSTM(object):
 
             # count the number of parameters
             self._num_params = get_num_params()
-            _LOGGER.debug('Total number of parameters = {:,}'.format(self._num_params))
+            #_LOGGER.debug('Total number of parameters = {:,}'.format(self._num_params))
 
             # generate summaries
             for variable in tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.GLOBAL_VARIABLES):
