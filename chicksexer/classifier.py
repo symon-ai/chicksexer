@@ -40,6 +40,7 @@ class CharLSTM(object):
     _checkpoint_file_name = 'model.ckpt'
     _instance_file_name = 'instance.pkl'
     _tensorboard_dir = 'tensorboard.log'
+    _maxIterationThreshold = 2000000 # 2 million
 
     def __init__(self, embedding_size=32, char_rnn_size=128, word_rnn_size=128, learning_rate=0.001,
                  embedding_dropout=0., char_rnn_dropout=0., word_rnn_dropout=0.):
@@ -195,8 +196,9 @@ class CharLSTM(object):
                 best_valid_score, patience = validate(
                     epoch, iteration, X_valid, y_valid, best_valid_score, patience)
 
-            if iteration > patience:
-                _LOGGER.info('Iteration is more than patience, finish training.')
+            if iteration > patience or iteration >= self._maxIterationThreshold:
+                _LOGGER.info('Total Iterations: '+iteration)
+                _LOGGER.info('Iteration is more than patience or max threshold, finish training.')                
                 break
 
         _LOGGER.info('Finished fitting the model.')
