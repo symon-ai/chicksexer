@@ -40,7 +40,7 @@ class CharLSTM(object):
     _checkpoint_file_name = 'model.ckpt'
     _instance_file_name = 'instance.pkl'
     _tensorboard_dir = 'tensorboard.log'
-    _maxIterationThreshold = 2000000 # 2 million
+    _maxIterationThreshold = 50000000 # 50 million
 
     def __init__(self, embedding_size=32, char_rnn_size=128, word_rnn_size=128, learning_rate=0.001,
                  embedding_dropout=0., char_rnn_dropout=0., word_rnn_dropout=0.):
