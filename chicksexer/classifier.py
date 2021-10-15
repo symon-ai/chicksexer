@@ -197,7 +197,7 @@ class CharLSTM(object):
                     epoch, iteration, X_valid, y_valid, best_valid_score, patience)
 
             if iteration > patience or iteration >= self._maxIterationThreshold:
-                _LOGGER.info('Total Iterations: '+iteration)
+                _LOGGER.info('Total Iterations: {:,}'.format(iteration))
                 _LOGGER.info('Iteration is more than patience or max threshold, finish training.')                
                 break
 
