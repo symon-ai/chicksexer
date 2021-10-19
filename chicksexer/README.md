@@ -71,6 +71,13 @@ pip install dist/chicksexer-<VERSION>-py3-none-any.whl
 
 `chicksexer` also depends on `tensorflow` package. In default, it tries to install the CPU-only version of `tensorflow`. If you want to use GPU, you need to install `tensorflow` with GPU support by yourself. (C.f. [Installing Tensorflow](https://www.tensorflow.org/install/))
 
+To build the project:
+```bash
+    export SYSTEM_VERSION_COMPAT=1
+    pipenv install
+```
+Setting SYSTEM_VERSION_COMPAT=1 fixes the issue of not being able to install packages due to error of No Lapack/Blas resources found. Ref: https://github.com/scipy/scipy/issues/13102
+
 Model Architecture
 ------------------
 The gender classifier is implemented using Character-level Multilayer LSTM. The architecture is roughly as follows:
