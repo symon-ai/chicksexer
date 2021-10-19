@@ -62,7 +62,6 @@ class CharLSTM(object):
         self._session = None
         # disable eager execution
         # tf.compat.v1.disable_eager_execution()
-        print ('disabling tf v2 behavior')
         tf.compat.v1.disable_v2_behavior()
 
     def train(self, names_train, y_train, names_valid, y_valid, model_path, batch_size=128,
@@ -70,7 +69,6 @@ class CharLSTM(object):
               valid_batch_size=2048, profile=False):
         """Train a gender classifier on the name/gender pairs."""
         start_time = time()
-        print('Patience', patience)
 
         def add_metric_summaries(mode, iteration, name2metric):
             """Add summary for metric."""
